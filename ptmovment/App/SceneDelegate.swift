@@ -1,22 +1,40 @@
-//
-//  SceneDelegate.swift
-//  ptmovment
-//
-//  Created by Bijan Mirfakhrai on 6/24/25.
-//
-
 import UIKit
 
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     var window: UIWindow?
 
-
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
-        // Use this method to optionally configure and attach the UIWindow `window` to the provided UIWindowScene `scene`.
-        // If using a storyboard, the `window` property will automatically be initialized and attached to the scene.
-        // This delegate does not imply the connecting scene or session are new (see `application:configurationForConnectingSceneSession` instead).
-        guard let _ = (scene as? UIWindowScene) else { return }
+        guard let windowScene = (scene as? UIWindowScene) else { return }
+        
+        window = UIWindow(windowScene: windowScene)
+        
+        // Check if user is already logged in
+        if AuthenticationService.shared.isAuthenticated, let user = AuthenticationService.shared.currentUser {
+            // Navigate directly to appropriate dashboard
+            navigateToUserDashboard(user: user)
+        } else {
+            // Show login screen
+            let loginVC = LoginViewController()
+            let navController = UINavigationController(rootViewController: loginVC)
+            window?.rootViewController = navController
+        }
+        
+        window?.makeKeyAndVisible()
+    }
+    
+    private func navigateToUserDashboard(user: User) {
+        let dashboardVC: UIViewController
+        
+        switch user.role {
+        case .physicalTherapist, .clinicAdmin:
+            dashboardVC = PTDashboardViewController()
+        case .patient:
+            dashboardVC = PatientDashboardViewController()
+        }
+        
+        let navController = UINavigationController(rootViewController: dashboardVC)
+        window?.rootViewController = navController
     }
 
     func sceneDidDisconnect(_ scene: UIScene) {
@@ -49,7 +67,4 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         // Save changes in the application's managed object context when the application transitions to the background.
         (UIApplication.shared.delegate as? AppDelegate)?.saveContext()
     }
-
-
 }
-
