@@ -160,8 +160,20 @@ extension PatientListViewController: UITableViewDataSource, UITableViewDelegate 
         assignAction.backgroundColor = .systemBlue
         assignAction.image = UIImage(systemName: "plus.circle")
         
-        let configuration = UISwipeActionsConfiguration(actions: [assignAction])
+        let progressAction = UIContextualAction(style: .normal, title: "Progress") { [weak self] _, _, completion in
+            self?.viewProgress(for: patient)
+            completion(true)
+        }
+        progressAction.backgroundColor = .systemGreen
+        progressAction.image = UIImage(systemName: "chart.line.uptrend.xyaxis")
+        
+        let configuration = UISwipeActionsConfiguration(actions: [progressAction, assignAction])
         return configuration
+    }
+    
+    private func viewProgress(for patient: User) {
+        let progressVC = PatientProgressViewController(patient: patient)
+        navigationController?.pushViewController(progressVC, animated: true)
     }
 }
 
@@ -332,14 +344,24 @@ class PatientDetailViewController: UIViewController {
     
     private func setupUI() {
         view.backgroundColor = .systemGroupedBackground
-        title = patient.fullName
-        
-        navigationItem.rightBarButtonItem = UIBarButtonItem(
-            image: UIImage(systemName: "plus"),
-            style: .plain,
-            target: self,
-            action: #selector(assignExerciseTapped)
-        )
+           title = patient.fullName
+           
+           // Add both assign and progress buttons
+           let assignButton = UIBarButtonItem(
+               image: UIImage(systemName: "plus"),
+               style: .plain,
+               target: self,
+               action: #selector(assignExerciseTapped)
+           )
+           
+           let progressButton = UIBarButtonItem(
+               image: UIImage(systemName: "chart.line.uptrend.xyaxis"),
+               style: .plain,
+               target: self,
+               action: #selector(progressViewTapped)
+           )
+           
+           navigationItem.rightBarButtonItems = [assignButton, progressButton]
         
         // Setup scroll view
         scrollView.translatesAutoresizingMaskIntoConstraints = false
@@ -465,37 +487,53 @@ class PatientDetailViewController: UIViewController {
             assignmentDetail.topAnchor.constraint(equalTo: assignmentLabel.bottomAnchor, constant: 12)
         ])
         
-        // Progress placeholder
-        progressView.backgroundColor = .systemBackground
-        progressView.layer.cornerRadius = 12
-        progressView.layer.shadowColor = UIColor.label.cgColor
-        progressView.layer.shadowOffset = CGSize(width: 0, height: 2)
-        progressView.layer.shadowOpacity = 0.1
-        progressView.layer.shadowRadius = 4
-        
-        let progressLabel = UILabel()
-        progressLabel.text = "📊 Progress Overview"
-        progressLabel.font = .systemFont(ofSize: 18, weight: .semibold)
-        progressLabel.textAlignment = .center
-        progressLabel.translatesAutoresizingMaskIntoConstraints = false
-        progressView.addSubview(progressLabel)
-        
-        let progressDetail = UILabel()
-        progressDetail.text = "87% completion rate • 5 day streak\nCharts and analytics coming soon!"
-        progressDetail.font = .systemFont(ofSize: 14)
-        progressDetail.textColor = .secondaryLabel
-        progressDetail.textAlignment = .center
-        progressDetail.numberOfLines = 0
-        progressDetail.translatesAutoresizingMaskIntoConstraints = false
-        progressView.addSubview(progressDetail)
-        
-        NSLayoutConstraint.activate([
-            progressLabel.centerXAnchor.constraint(equalTo: progressView.centerXAnchor),
-            progressLabel.topAnchor.constraint(equalTo: progressView.topAnchor, constant: 20),
-            
-            progressDetail.centerXAnchor.constraint(equalTo: progressView.centerXAnchor),
-            progressDetail.topAnchor.constraint(equalTo: progressLabel.bottomAnchor, constant: 12)
-        ])
+        // Progress placeholder - MAKE THIS TAPPABLE
+           progressView.backgroundColor = .systemBackground
+           progressView.layer.cornerRadius = 12
+           progressView.layer.shadowColor = UIColor.label.cgColor
+           progressView.layer.shadowOffset = CGSize(width: 0, height: 2)
+           progressView.layer.shadowOpacity = 0.1
+           progressView.layer.shadowRadius = 4
+           
+           // Add tap gesture to progress view
+           let progressTapGesture = UITapGestureRecognizer(target: self, action: #selector(progressViewTapped))
+           progressView.addGestureRecognizer(progressTapGesture)
+           progressView.isUserInteractionEnabled = true
+           
+           let progressLabel = UILabel()
+           progressLabel.text = "📊 Progress Analytics"
+           progressLabel.font = .systemFont(ofSize: 18, weight: .semibold)
+           progressLabel.textAlignment = .center
+           progressLabel.translatesAutoresizingMaskIntoConstraints = false
+           progressView.addSubview(progressLabel)
+           
+           let progressDetail = UILabel()
+           progressDetail.text = "87% completion rate • 5 day streak\nTap to view detailed analytics"
+           progressDetail.font = .systemFont(ofSize: 14)
+           progressDetail.textColor = .secondaryLabel
+           progressDetail.textAlignment = .center
+           progressDetail.numberOfLines = 0
+           progressDetail.translatesAutoresizingMaskIntoConstraints = false
+           progressView.addSubview(progressDetail)
+           
+           // Add arrow indicator
+           let arrowImageView = UIImageView(image: UIImage(systemName: "chevron.right"))
+           arrowImageView.tintColor = .systemBlue
+           arrowImageView.translatesAutoresizingMaskIntoConstraints = false
+           progressView.addSubview(arrowImageView)
+           
+           NSLayoutConstraint.activate([
+               progressLabel.centerXAnchor.constraint(equalTo: progressView.centerXAnchor),
+               progressLabel.topAnchor.constraint(equalTo: progressView.topAnchor, constant: 20),
+               
+               progressDetail.centerXAnchor.constraint(equalTo: progressView.centerXAnchor),
+               progressDetail.topAnchor.constraint(equalTo: progressLabel.bottomAnchor, constant: 12),
+               
+               arrowImageView.trailingAnchor.constraint(equalTo: progressView.trailingAnchor, constant: -20),
+               arrowImageView.centerYAnchor.constraint(equalTo: progressView.centerYAnchor),
+               arrowImageView.widthAnchor.constraint(equalToConstant: 16),
+               arrowImageView.heightAnchor.constraint(equalToConstant: 16)
+           ])
         
         // Activity placeholder
         activityView.backgroundColor = .systemBackground
@@ -535,6 +573,11 @@ class PatientDetailViewController: UIViewController {
         let navController = UINavigationController(rootViewController: assignmentVC)
         navController.modalPresentationStyle = .formSheet
         present(navController, animated: true)
+    }
+    
+    @objc private func progressViewTapped() {
+        let progressVC = PatientProgressViewController(patient: patient)
+        navigationController?.pushViewController(progressVC, animated: true)
     }
 }
 

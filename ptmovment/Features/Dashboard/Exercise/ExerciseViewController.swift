@@ -12,7 +12,7 @@ class ExerciseViewController: UIViewController {
     
     // Analysis components
     private let visionService = VisionService()
-    private let movementAnalyzer = MovementAnalyzer()
+    private var movementAnalyzer: EnhancedMovementAnalyzer
     private var currentExercise: Exercise = Exercise.shoulderRaise
     private var currentSession: MovementSession?
     private var currentAssignment: ExerciseAssignment?
@@ -27,12 +27,14 @@ class ExerciseViewController: UIViewController {
     
     // Initialization
     init(exercise: Exercise, assignment: ExerciseAssignment? = nil) {
+        self.movementAnalyzer = EnhancedMovementAnalyzer(exercise: exercise)
         super.init(nibName: nil, bundle: nil)
         self.currentExercise = exercise
         self.currentAssignment = assignment
     }
-    
+
     required init?(coder: NSCoder) {
+        self.movementAnalyzer = EnhancedMovementAnalyzer(exercise: Exercise.shoulderRaise)
         super.init(coder: coder)
     }
     
@@ -254,8 +256,7 @@ extension ExerciseViewController: AVCaptureVideoDataOutputSampleBufferDelegate {
     }
     
     private func processPoseObservations(_ observations: [VNHumanBodyPoseObservation]) {
-        let result = movementAnalyzer.analyzeMovement(poses: observations, for: currentExercise)
-        
+        let result = movementAnalyzer.analyzeMovement(poses: observations)
         // Update UI
         feedbackLabel.text = result.feedback
         feedbackLabel.backgroundColor = result.feedbackType.color.withAlphaComponent(0.8)
@@ -285,7 +286,7 @@ extension ExerciseViewController: AVCaptureVideoDataOutputSampleBufferDelegate {
         overlayView.layer.addSublayer(layer)
         
         do {
-            let recognizedPoints = try observation.recognizedPoints(forGroupKey: .all)
+            let recognizedPoints = try observation.recognizedPoints(.all)
             
             for (key, point) in recognizedPoints {
                 guard point.confidence > 0.3 else { continue }

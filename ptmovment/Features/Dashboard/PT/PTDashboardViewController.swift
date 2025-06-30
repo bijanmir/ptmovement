@@ -305,9 +305,8 @@ class PTDashboardViewController: UIViewController {
     }
     
     private func viewAnalytics() {
-        let alert = UIAlertController(title: "Analytics", message: "Analytics dashboard coming soon!", preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "OK", style: .default))
-        present(alert, animated: true)
+        let analyticsVC = PTAnalyticsViewController()
+           navigationController?.pushViewController(analyticsVC, animated: true)
     }
     
     private func testExercise() {
