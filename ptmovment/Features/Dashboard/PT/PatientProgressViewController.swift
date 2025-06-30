@@ -310,13 +310,6 @@ struct SessionSummary {
     let notes: String?
 }
 
-struct ComplianceData {
-    let weeklyCompletionRate: Double
-    let monthlyCompletionRate: Double
-    let missedSessions: Int
-    let consistencyScore: Double
-    let lastActiveDate: Date
-}
 
 struct ProgressPoint {
     let date: Date
